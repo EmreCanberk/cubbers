@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dalgalı Arka Plan ve 3D Küp</title>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css"
+        integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.1.0/chroma.min.js"></script>
+    <style>
+        /* Global Reset */
+        *,
+        *:before,
+        *:after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            height: 100vh;
+            overflow: hidden;
+            /* Dalgalı arka plan için taşmayı gizle */
+            font-family: 'Roboto', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            background: #25335b;
+            /* Küp animasyonunun orijinal arka planı, SVG arka planı tarafından ezilecek */
+        }
+
+        /* SVG Waves - Başlangıç */
+        svg#svg {
+            position: absolute;
+            /* Arka plan olarak konumlandır */
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            /* İçeriğin arkasında kalmasını sağla */
+        }
+
+        svg.path path {
+            stroke: none;
+        }
+
+        svg.stroke path {
+            fill: none;
+            stroke-width: 1px;
+        }
+
+        svg .circle {
+            fill: #fff;
+        }
+
+        /* SVG Waves - Bitiş */
+
+        /* NAVBAR - Başlangıç */
+        nav {
+            width: 100%;
+            background: rgba(28, 34, 57, 0.8);
+            /* Saydamlık ekledim */
+            color: white;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            /* Üstte kalmasını sağla */
+        }
+
+        nav .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #efefef;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 25px;
+        }
+
+        nav ul li a {
+            color: #ddd;
+            text-decoration: none;
+            font-size: 16px;
+            transition: color 0.3s ease;
+        }
+
+        nav ul li a:hover {
+            color: #ef4149;
+        }
+
+        /* NAVBAR - Bitiş */
+
+        /* 3D CUBE ANIMATION - Başlangıç */
+        @keyframes animate {
+            0% {
+                filter: hue-rotate(0deg);
+            }
+
+            100% {
+                filter: hue-rotate(360deg);
+            }
+        }
+
+        .container {
+            position: relative;
+            transform: skewY(-20deg);
+            animation: animate 5s linear infinite;
+            margin-top: 60px;
+            /* Navbar'dan biraz boşluk bırak */
+            z-index: 1;
+            /* Dalgaların üzerinde kalsın */
+        }
+
+        .cube {
+            position: relative;
+            z-index: 2;
+        }
+
+        .cube:nth-child(2) {
+            z-index: 1;
+            transform: translate(-60px, -60px);
+        }
+
+        .cube:nth-child(3) {
+            z-index: 3;
+            transform: translate(60px, 60px);
+        }
+
+        .cube div {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            transform: translate(calc(-70px * var(--x)), calc(-60px * var(--y)));
+        }
+
+        .cube div span {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            background: #dcdcdc;
+            z-index: calc(1 * var(--i));
+            transition: 1.5s;
+        }
+
+        .cube div span:hover {
+            background: #ef4149;
+            filter: drop-shadow(0 0 30px #ef4149);
+            transition: 0s;
+        }
+
+        .cube div span:hover::before,
+        .cube div span:hover::after {
+            background: #ef4149;
+            transition: 0s;
+        }
+
+        .cube div span::before {
+            content: "";
+            position: absolute;
+            left: -40px;
+            width: 40px;
+            height: 100%;
+            background: #ffffff;
+            transform-origin: right;
+            transform: skewY(45deg);
+            transition: 1.5s;
+        }
+
+        .cube div span::after {
+            content: "";
+            position: absolute;
+            top: -40px;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background: #f2f2f2;
+            transform-origin: bottom;
+            transform: skewX(45deg);
+            transition: 1.5s;
+        }
+
+        /* 3D CUBE ANIMATION - Bitiş */
+
+        /* SOCIAL ICONS - Başlangıç */
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            z-index: 1;
+            /* Dalgaların üzerinde kalsın */
+        }
+
+        .social-icons li {
+            list-style: none;
+            margin: 0 10px;
+        }
+
+        .social-icons li a {
+            width: 60px;
+            height: 60px;
+            background-color: #fff;
+            text-align: center;
+            line-height: 60px;
+            font-size: 28px;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            display: block;
+            border: 3px solid #fff;
+            z-index: 1;
+            color: #262626;
+            transition: .5s;
+        }
+
+        .social-icons li a:hover {
+            color: #fff;
+            transform: rotateY(360deg);
+        }
+
+        .social-icons li a::before {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: .5s;
+            z-index: -1;
+        }
+
+        .social-icons li a:hover::before {
+            top: 0;
+        }
+
+        .social-icons li:nth-child(1) a::before {
+            background: #3b5999;
+            /* Facebook */
+        }
+
+        .social-icons li:nth-child(2) a::before {
+            background: #55acee;
+            /* Twitter */
+        }
+
+        .social-icons li:nth-child(3) a::before {
+            background: #0077b5;
+            /* LinkedIn */
+        }
+
+        .social-icons li:nth-child(4) a::before {
+            background: #dd4b39;
+            /* Google Plus */
+        }
+
+        /* SOCIAL ICONS - Bitiş */
+
+        /* Dat.GUI için pozisyon ayarlaması */
+        .dg.main {
+            z-index: 100 !important;
+            /* Diğer tüm elementlerin üzerinde kalsın */
+        }
+    </style>
+</head>
+
+<body>
+
+    <svg id="svg"></svg>
+
+    <nav>
+        <div class="logo">AnimasyonSite</div>
+        <ul>
+            <li><a href="#">Anasayfa</a></li>
+            <li><a href="#">Projeler</a></li>
+            <li><a href="#">Hakkımızda</a></li>
+            <li><a href="#">İletişim</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="cube">
+            <div style="--x:-1; --y:0;">
+                <span style="--i:3;"></span>
+                <span style="--i:2;"></span>
+                <span style="--i:1;"></span>
+            </div>
+            <div style="--x:0; --y:0;">
+                <span style="--i:3;"></span>
+                <span style="--i:2;"></span>
+                <span style="--i:1;"></span>
+            </div>
+            <div style="--x:1; --y:0;">
+                <span style="--i:3;"></span>
+                <span style="--i:2;"></span>
+                <span style="--i:1;"></span>
+            </div>
+        </div>
+
+        <div class="cube">
+            <div style="--x:-1; --y:0;">
+                <span style="--i:3;"></span>
+                <span style="--i:2;"></span>
+                <span style="--i:1;"></span>
+            </div>
+            <div style="--x:0; --y:0;">
+                <span style="--i:3;"></span>
+                <span style="--i:2;"></span>
+                <span style="--i:1;"></span>
+            </div>
+            <div style="--x:1; --y:0;">
+                <span style="--i:3;"></span>
+                <span style="--i:2;"></span>
+                <span style="--i:1;"></span>
+            </div>
+        </div>
+
+        <div class="cube">
+            <div style="--x:-1; --y:0;">
+                <span style="--i:3;"></span>
+                <span style="--i:2;"></span>
+                <span style="--i:1;"></span>
+            </div>
+            <div style="--x:0; --y:0;">
+                <span style="--i:3;"></span>
+                <span style="--i:2;"></span>
+                <span style="--i:1;"></span>
+            </div>
+            <div style="--x:1; --y:0;">
+                <span style="--i:3;"></span>
+                <span style="--i:2;"></span>
+                <span style="--i:1;"></span>
+            </div>
+        </div>
+    </div>
+
+    <ul class="social-icons">
+        <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
+        <li><a href="#"><i class="fab fa-twitter"></i></a></li>
+        <li><a href="#"><i class="fab fa-linkedin-in"></i></a></li>
+        <li><a href="#"><i class="fab fa-google-plus-g"></i></a></li>
+    </ul>
+
+    <script>
+        /*--------------------
+        SETTINGS
+        --------------------*/
+        let settings = {
+            amplitudeX: 100,
+            amplitudeY: 20,
+            lines: 20,
+            hueStartColor: 53,
+            saturationStartColor: 74,
+            lightnessStartColor: 67,
+            hueEndColor: 216,
+            saturationEndColor: 100,
+            lightnessEndColor: 7,
+            smoothness: 3,
+            offsetX: 10,
+            fill: true,
+            crazyness: false
+        }
+
+        /*--------------------
+        VARS
+        --------------------*/
+        let svg = document.getElementById('svg'),
+            winW = window.innerWidth,
+            winH = window.innerHeight,
+            Colors = [],
+            Paths = [],
+            Mouse = {
+                x: winW / 2,
+                y: winH / 2
+            },
+            overflow,
+            startColor,
+            endColor,
+            gui;
+
+        /*--------------------
+        PATH
+        --------------------*/
+        class Path {
+            constructor(y, fill, offsetX) {
+                this.rootY = y;
+                this.fill = fill;
+                this.offsetX = offsetX;
+            };
+
+            createRoot() {
+                this.root = [];
+                let offsetX = this.offsetX;
+                let x = -overflow + offsetX;
+                let y = 0;
+                let rootY = this.rootY;
+                let upSideDown = 0;
+
+                this.root.push({ x: x, y: rootY });
+
+                while (x < winW) {
+                    let value = Math.random() > 0.5 ? 1 : -1;
+
+                    // Crazyness
+                    if (settings.crazyness) {
+                        x += parseInt((Math.random() * settings.amplitudeX / 2) + (settings.amplitudeX / 2));
+                        y = (parseInt((Math.random() * settings.amplitudeY / 2) + (settings.amplitudeY / 2)) * value) + rootY;
+                    } else {
+                        // Geometric
+                        upSideDown = !upSideDown;
+                        value = (upSideDown == 0) ? 1 : -1;
+
+                        x += settings.amplitudeX;
+                        y = settings.amplitudeY * value + rootY;
+                    }
+
+                    this.root.push({ x: x, y: y });
+                };
+
+                this.root.push({ x: winW + overflow, y: rootY });
+            };
+
+            createCircles() {
+                const fill = '#fff';
+                this.root.forEach(function (key, obj) {
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('r', 1);
+                    circle.setAttribute('cx', key.x);
+                    circle.setAttribute('cy', key.y);
+                    circle.setAttribute('fill', 'rgba(255, 255, 255, .3)');
+                    svg.appendChild(circle);
+                })
+            };
+
+            createPath() {
+                const root = this.root;
+                const fill = this.fill;
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('fill', fill);
+                path.setAttribute('stroke', fill);
+                svg.appendChild(path);
+                if (settings.fill) {
+                    svg.setAttribute('class', 'path');
+                } else {
+                    svg.setAttribute('class', 'stroke');
+                }
+
+                // first & second points
+                let d = `M -${overflow} ${winH + overflow}`;
+                d += ` L ${root[0].x} ${root[0].y}`;
+
+                // magic points
+                for (let i = 1; i < this.root.length - 1; i++) {
+                    let prevPoint = root[i - 1];
+                    let actualPoint = root[i];
+                    let diffX = (actualPoint.x - prevPoint.x) / settings.smoothness;
+                    let x1 = prevPoint.x + diffX;
+                    let x2 = actualPoint.x - diffX;
+                    let x = actualPoint.x;
+                    let y1 = prevPoint.y;
+                    let y2 = actualPoint.y;
+                    let y = actualPoint.y;
+
+                    d += ` C ${x1} ${y1}, ${x2} ${y2}, ${x} ${y}`;
+                }
+
+                // Second last
+                const reverseRoot = root.reverse();
+                d += ` L ${reverseRoot[0].x} ${reverseRoot[0].y}`;
+                root.reverse();
+
+                // Last point
+                d += ` L ${winW + overflow} ${winH + overflow}`;
+
+                // Close path
+                d += ` Z`;
+
+                path.setAttribute('d', d);
+            };
+
+            createLines() {
+                const root = this.root;
+                const fill = this.fill;
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('fill', fill);
+                path.classList.add('path');
+                svg.appendChild(path);
+
+                // first & second points
+                let d = `M -${overflow} ${winH + overflow}`;
+                d += ` L ${root[0].x} ${root[0].y}`;
+
+                // Magic points
+                for (let i = 1; i < root.length - 1; i++) {
+                    d += ` L ${root[i].x} ${root[i].y}`;
+                }
+
+                // Second last & last points
+                const reverseRoot = root.reverse();
+                d += ` L ${reverseRoot[0].x} ${reverseRoot[0].y}`;
+                d += ` L ${winW + overflow} ${winH + overflow}`;
+                root.reverse();
+
+                // Close path
+                d += ` Z`;
+
+                path.setAttribute('d', d);
+            };
+        };
+
+        /*--------------------
+        INIT
+        --------------------*/
+        function init() {
+            // Overflow
+            overflow = Math.abs(settings.lines * settings.offsetX);
+
+            // Colors
+            startColor = `hsl(${settings.hueStartColor}, ${settings.saturationStartColor}%, ${settings.lightnessStartColor}%)`;
+            endColor = `hsl(${settings.hueEndColor}, ${settings.saturationEndColor}%, ${settings.lightnessEndColor}%)`;
+            Colors = chroma.scale([startColor, endColor]).mode('lch').colors(settings.lines + 2);
+
+            // Reset
+            Paths = [];
+            // Mevcut SVG'yi kaldırıp yenisini oluşturma
+            const oldSvg = document.getElementById('svg');
+            if (oldSvg) {
+                oldSvg.parentNode.removeChild(oldSvg);
+            }
+            svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute('id', 'svg');
+            document.body.prepend(svg); // body'nin ilk çocuğu olarak ekle ki arka planda kalsın
+
+            // Background
+            if (settings.fill) {
+                svg.style.backgroundColor = Colors[0];
+            } else {
+                svg.style.backgroundColor = 'transparent'; // Eğer doldurma yoksa şeffaf yap
+            }
+
+            // Lines
+            for (let i = 0; i < settings.lines + 1; i++) {
+                let rootY = parseInt(winH / settings.lines * i);
+                const path = new Path(rootY, Colors[i + 1], settings.offsetX * i);
+                Paths.push(path);
+                path.createRoot();
+            }
+            Paths.forEach(function (path) {
+                path.createPath();
+            });
+        };
+        init(); // İlk yüklemede animasyonu başlat
+
+        /*--------------------
+        WIN RESIZE
+        --------------------*/
+        window.addEventListener('resize', function () {
+            winW = window.innerWidth;
+            winH = window.innerHeight;
+            init();
+        });
+
+        /*--------------------
+        DAT GUI
+        --------------------*/
+        function datgui() {
+            if (gui) { // Eğer gui zaten varsa, yok et
+                gui.destroy();
+            }
+            gui = new dat.GUI();
+
+            // Settings
+            let guiSettings = gui.addFolder('Settings');
+            guiSettings.add(settings, 'lines', 5, 50).step(1).onChange(init);
+            guiSettings.add(settings, 'amplitudeX', 20, 300).step(1).onChange(init);
+            guiSettings.add(settings, 'amplitudeY', 0, 200).step(1).onChange(init);
+            guiSettings.add(settings, 'offsetX', -20, 20).step(1).onChange(init);
+            guiSettings.add(settings, 'smoothness', 0.5, 10).step(0.2).onChange(init);
+            guiSettings.add(settings, 'fill', false).onChange(init);
+            guiSettings.add(settings, 'crazyness', false).onChange(init);
+            guiSettings.open();
+
+            // Start Color
+            let guiStartColor = gui.addFolder('Start Color');
+            guiStartColor.add(settings, 'hueStartColor', 0, 360).step(1).onChange(init);
+            guiStartColor.add(settings, 'saturationStartColor', 0, 100).step(1).onChange(init);
+            guiStartColor.add(settings, 'lightnessStartColor', 0, 100).step(1).onChange(init);
+            guiStartColor.open();
+
+            // End Color
+            let guiEndColor = gui.addFolder('End Color');
+            guiEndColor.add(settings, 'hueEndColor', 0, 360).step(1).onChange(init);
+            guiEndColor.add(settings, 'saturationEndColor', 0, 100).step(1).onChange(init);
+            guiEndColor.add(settings, 'lightnessEndColor', 0, 100).step(1).onChange(init);
+            guiEndColor.open();
+
+            // Randomize
+            let guiRandomize = { randomize: function () { randomize() } };
+            gui.add(guiRandomize, 'randomize');
+
+            return gui;
+        }
+        datgui(); // Dat.GUI panelini başlat
+
+        /*--------------------
+        RANDOMIZE
+        --------------------*/
+        function randomize() {
+            settings = {
+                lines: parseInt(5 + Math.random() * 45),
+                amplitudeX: parseInt(20 + Math.random() * 300),
+                amplitudeY: parseInt(Math.random() * 200),
+                hueStartColor: parseInt(Math.random() * 360),
+                saturationStartColor: 74,
+                lightnessStartColor: 67,
+                hueEndColor: parseInt(Math.random() * 360),
+                saturationEndColor: 90,
+                lightnessEndColor: 14,
+                smoothness: 1 + parseInt(Math.random() * 9),
+                offsetX: parseInt(-20 + Math.random() * 40),
+                fill: Math.random() * 1 > 0.3 ? true : false,
+                crazyness: Math.random() * 1 > 0.9 ? true : false
+            }
+            init();
+            gui.destroy(); // Eski GUI'yi yok et
+            datgui(); // Yeni GUI'yi oluştur
+        }
+    </script>
+</body>
+
+</html>
